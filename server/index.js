@@ -12,14 +12,12 @@ const CONTRACT_ABI = require('./artifacts/contracts/CommunityDAO.sol/CommunityDA
 const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
 const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-// Hardcoded ETH price for converting amount to USD for the frontend
 const ETH_USD_PRICE = 4500;
 
 app.get('/api/proposals', async (req, res) => {
     try {
         const proposalsFromChain = await contract.getAllProposals();
         
-        // Map the blockchain data to the format the new frontend expects
         const formattedProposals = proposalsFromChain.map(p => {
             const deadline = new Date(Number(p.deadline) * 1000);
             let status = "pending";
@@ -31,15 +29,15 @@ app.get('/api/proposals', async (req, res) => {
 
             return {
                 id: p.id.toString(),
-                title: p.description, // Using description as title
-                description: `This proposal seeks to allocate ${ethers.formatEther(p.amount)} ETH for its objective.`, // Generating a description
+                title: p.description, 
+                description: `This proposal seeks to allocate ${ethers.formatEther(p.amount)} ETH for its objective.`, 
                 amountUsd: Number(ethers.formatEther(p.amount)) * ETH_USD_PRICE,
                 payoutAddress: p.recipient,
                 votesFor: Number(p.voteCount),
-                votesAgainst: 0, // Your contract doesn't track 'against' votes, so we'll default to 0
+
                 status: status
             };
-        }).sort((a, b) => b.id - a.id); // Sort by newest first
+        }).sort((a, b) => b.id - a.id); 
 
         res.json(formattedProposals);
     } catch (error) {
@@ -50,5 +48,5 @@ app.get('/api/proposals', async (req, res) => {
 
 const PORT = 5001;
 app.listen(PORT, () => {
-    console.log(`✅ Server is running on port ${PORT}`);
+    console.log(` Server is running on port ${PORT}`);
 });
