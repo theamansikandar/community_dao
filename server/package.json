@@ -4,7 +4,8 @@
   "description": "Backend for the CivicDAO platform.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "npx hardhat compile"
   },
   "dependencies": {
     "cors": "^2.8.5",
