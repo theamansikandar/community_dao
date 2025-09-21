@@ -1,55 +1,48 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
+const { ethers } = require("ethers");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB connected successfully.'))
-    .catch(err => console.error('MongoDB connection error:', err));
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
+const CONTRACT_ABI = require('./artifacts/contracts/CommunityDAO.sol/CommunityDAO.json').abi;
 
-const proposalSchema = new mongoose.Schema({
-    id: { type: String, required: true, unique: true },
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    amountUsd: { type: Number, required: true },
-    payoutAddress: { type: String, required: true },
-    votesFor: { type: Number, default: 0 },
-    votesAgainst: { type: Number, default: 0 },
-    status: { type: String, default: 'pending' }
-});
+const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
+const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-const Proposal = mongoose.model('Proposal', proposalSchema);
+const ETH_USD_PRICE = 4500; 
 
 app.get('/api/proposals', async (req, res) => {
     try {
-        const proposals = await Proposal.find().sort({ id: -1 });
-        res.json(proposals);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching proposals from database." });
-    }
-});
+        const proposalsFromChain = await contract.getAllProposals();
+        
+        const formattedProposals = proposalsFromChain.map(p => {
+            const deadline = new Date(Number(p.deadline) * 1000);
+            let status = p.executed ? "passed" : (deadline < new Date() ? "rejected" : "pending");
 
-app.post('/api/proposals', async (req, res) => {
-    try {
-        const newProposal = new Proposal({
-            id: String(Date.now()),
-            title: req.body.title,
-            description: req.body.description,
-            amountUsd: Number(req.body.amount),
-            payoutAddress: req.body.address,
-        });
-        await newProposal.save();
-        res.status(201).json(newProposal);
+            return {
+                id: p.id.toString(),
+                title: p.description,
+                description: p.ipfsHash,
+                amountUsd: Number(ethers.formatEther(p.amount)) * ETH_USD_PRICE,
+                payoutAddress: p.recipient,
+                votesFor: Number(p.voteCount),
+                votesAgainst: 0,
+                status: status
+            };
+        }).sort((a, b) => b.id - a.id);
+
+        res.json(formattedProposals);
     } catch (error) {
-        res.status(500).json({ message: "Error saving proposal to database." });
+        console.error("Error fetching proposals:", error);
+        res.status(500).send("Error fetching proposals from the blockchain.");
     }
 });
 
 const PORT = 5001;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`✅ Server is running on port ${PORT}`);
 });
