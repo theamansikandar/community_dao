@@ -1,23 +1,19 @@
 {
-  "name": "community-dao-server",
+  "name": "civic-dao-server",
   "version": "1.0.0",
-  "description": "Backend and smart contracts for the Community DAO platform.",
+  "description": "Backend for the CivicDAO platform.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "compile": "npx hardhat compile",
-    "deploy": "npx hardhat run scripts/deploy.js --network localhost"
+    "start": "node index.js"
   },
-  "author": "",
-  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "ethers": "^6.15.0",
-    "express": "^4.21.2"
+    "ethers": "^6.13.1",
+    "express": "^4.19.2"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@openzeppelin/contracts": "^4.9.6"
+    "@openzeppelin/contracts": "^5.0.2"
   }
 }
